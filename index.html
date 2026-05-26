@@ -621,28 +621,59 @@ function salvarAtualizacao(){
   if(!texto){toast('Descreva a resolução');return;}
   toast('Salvando...');
 
-  // Upload de fotos primeiro, depois salvar
-  var fotosIds=[];
-  var pendente=fotosParaEnviar.length;
-  if(!pendente){
-    salvarNoPlanilha(status,texto,[]);return;
+  if(!fotosParaEnviar.length){
+    salvarNoPlanilha(status,texto,[]);
+    return;
   }
-  fotosParaEnviar.forEach(function(file,i){
+
+  // Upload em chunks — base64 é grande demais para URL única
+  var fotosIds=[];
+  var idx=0;
+
+  function uploadProximo(){
+    if(idx>=fotosParaEnviar.length){
+      salvarNoPlanilha(status,texto,fotosIds);
+      return;
+    }
+    var file=fotosParaEnviar[idx];
+    toast('Enviando foto '+(idx+1)+'/'+fotosParaEnviar.length+'...');
     var reader=new FileReader();
     reader.onload=function(e){
       var base64=e.target.result.split(',')[1];
-      chamarScript({
-        acao:'uploadFoto',
-        dados:JSON.stringify({base64:base64,nome:file.name,mime:file.type}),
-        t:Date.now()+i
-      },function(d){
-        if(d.ok)fotosIds.push(d.id);
-        pendente--;
-        if(pendente===0)salvarNoPlanilha(status,texto,fotosIds);
-      });
+      var CHUNK=30000; // ~30KB por chunk
+      var chunks=[];
+      for(var i=0;i<base64.length;i+=CHUNK) chunks.push(base64.substring(i,i+CHUNK));
+      var uploadId='oc_'+Date.now()+'_'+idx;
+      var ci=0;
+
+      function enviarChunk(){
+        if(ci>=chunks.length){
+          // Todos os chunks enviados — finalizar foto
+          chamarScript({
+            acao:'finalizarFoto',
+            dados:JSON.stringify({uploadId:uploadId,nome:file.name,mime:file.type,totalChunks:chunks.length}),
+            t:Date.now()
+          },function(d){
+            if(d.ok&&d.id) fotosIds.push(d.id);
+            idx++;
+            uploadProximo();
+          });
+          return;
+        }
+        chamarScript({
+          acao:'uploadChunk',
+          dados:JSON.stringify({uploadId:uploadId,chunk:chunks[ci],idx:ci}),
+          t:Date.now()+ci
+        },function(d){
+          if(d.ok){ci++;enviarChunk();}
+          else{toast('Erro no upload: '+(d.erro||''));idx++;uploadProximo();}
+        });
+      }
+      enviarChunk();
     };
     reader.readAsDataURL(file);
-  });
+  }
+  uploadProximo();
 }
 
 function salvarNoPlanilha(status,texto,fotosIds){
