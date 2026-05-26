@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Pangeia · Ocorrências</title>
+<style>
+:root{
+  --roxo:#592C95;--roxo-esc:#3D1B6B;--roxo-cl:#AE76E5;
+  --lav:#E4D4F9;--lav-l:#F5EEFB;--amarelo:#FFD23F;
+  --txt:#2A1655;--txt-s:#6B5B8E;--brd:#D9C7F0;
+  --ok:#0F6E56;--ok-bg:#dcfce7;--ok-txt:#166534;
+  --warn:#854F0B;--warn-bg:#fef3c7;
+  --bad:#A32D2D;--bad-bg:#fee2e2;
+  --info:#185FA5;--info-bg:#dbeafe;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--lav-l);color:var(--txt);min-height:100vh;}
+
+/* TOP */
+.topbar{background:linear-gradient(135deg,var(--roxo),var(--roxo-esc));padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(42,22,85,.3);}
+.topbar h1{font-size:17px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;}
+.brand{background:var(--amarelo);color:var(--roxo-esc);padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.05em;}
+.ubtn{background:var(--amarelo);color:var(--roxo-esc);border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* CONTENT */
+.wrap{max-width:1100px;margin:0 auto;padding:16px;}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.kpi{background:#fff;border-radius:12px;border:1px solid var(--brd);padding:12px 14px;cursor:pointer;transition:all .15s;box-shadow:0 2px 6px rgba(89,44,149,.06);}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(89,44,149,.12);}
+.kpi.active{border-width:2px;border-color:var(--roxo);background:var(--lav-l);}
+.kpi-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-s);margin-bottom:4px;}
+.kpi-val{font-size:28px;font-weight:800;line-height:1;}
+
+/* PAINEL PENDENTES */
+.painel-pendentes{background:#fff;border-radius:14px;border:2px solid #fca5a5;padding:14px 16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(163,45,45,.1);}
+.painel-title{font-size:11px;font-weight:800;color:var(--bad);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.pending-list{display:flex;flex-direction:column;gap:8px;}
+.pending-item{background:var(--bad-bg);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;border-left:4px solid var(--bad);}
+.pending-item:hover{background:#fecaca;}
+.pending-item.mod{background:var(--warn-bg);border-left-color:#d97706;}
+.pending-item.mod:hover{background:#fde68a;}
+.pending-nome{font-size:13px;font-weight:700;color:var(--txt);}
+.pending-det{font-size:11px;color:var(--txt-s);margin-top:2px;}
+
+/* FILTROS */
+.filtros{background:#fff;border-radius:12px;border:1px solid var(--brd);padding:12px 14px;margin-bottom:14px;}
+.filtros-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;}
+.filtros-grid input,.filtros-grid select{padding:8px 12px;border:1.5px solid var(--brd);border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:var(--txt);}
+.filtros-grid input:focus,.filtros-grid select:focus{border-color:var(--roxo);}
+.clr-btn{padding:8px 12px;border:1px solid var(--brd);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--roxo);white-space:nowrap;}
+
+/* CARDS DE OCORRÊNCIA */
+.oc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;}
+.oc-card{background:#fff;border-radius:14px;border:1px solid var(--brd);padding:14px;cursor:pointer;transition:all .15s;box-shadow:0 2px 6px rgba(89,44,149,.04);}
+.oc-card:hover{border-color:var(--roxo-cl);box-shadow:0 4px 14px rgba(89,44,149,.1);}
+.oc-card.urgente{border-left:4px solid var(--bad);}
+.oc-card.moderado{border-left:4px solid #d97706;}
+.oc-card.baixo{border-left:4px solid var(--ok);}
+.oc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;}
+.oc-titulo{font-size:13px;font-weight:800;color:var(--txt);flex:1;}
+.oc-info{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--txt-s);margin-top:4px;}
+.pill{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block;}
+.pill-urgente{background:var(--bad-bg);color:var(--bad);}
+.pill-moderado{background:var(--warn-bg);color:var(--warn);}
+.pill-baixo{background:var(--ok-bg);color:var(--ok-txt);}
+.pill-pendente{background:#fee2e2;color:var(--bad);}
+.pill-andamento{background:var(--warn-bg);color:var(--warn);}
+.pill-parcial{background:var(--info-bg);color:var(--info);}
+.pill-finalizado{background:var(--ok-bg);color:var(--ok-txt);}
+.oc-desc{font-size:12px;color:var(--txt-s);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* FLOAT CARD */
+.fbk{position:fixed;inset:0;z-index:299;background:rgba(42,22,85,.25);display:none;}
+.fbk.active{display:block;}
+.fc{position:fixed;z-index:300;background:#fff;border-radius:16px;box-shadow:0 16px 64px rgba(89,44,149,.25);border:1.5px solid var(--lav);padding:0;width:min(640px,96vw);max-height:88vh;display:none;flex-direction:column;top:50%;left:50%;transform:translate(-50%,-50%);animation:fi .18s ease;}
+.fc.show{display:flex;}
+@keyframes fi{from{opacity:0;transform:translate(-50%,-50%) scale(.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.fc-head{padding:16px 18px 12px;border-bottom:1px solid var(--lav-l);display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;}
+.fc-body{overflow-y:auto;flex:1;padding:14px 18px 18px;}
+.fx{background:var(--lav-l);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;color:var(--txt-s);font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.fc-titulo{font-size:15px;font-weight:800;color:var(--txt);}
+.fc-sub{font-size:11px;color:var(--txt-s);margin-top:3px;}
+.sec{font-size:10px;font-weight:800;color:var(--roxo);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 6px;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.detail-item{background:var(--lav-l);border-radius:8px;padding:8px 10px;}
+.detail-lbl{font-size:9px;font-weight:700;color:var(--txt-s);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.detail-val{font-size:13px;font-weight:600;color:var(--txt);}
+.full-text{background:var(--lav-l);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:10px;}
+
+/* FOTOS */
+.fotos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-bottom:10px;}
+.foto-thumb{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;cursor:pointer;transition:transform .15s;}
+.foto-thumb:hover{transform:scale(1.06);}
+
+/* RESOLUÇÃO */
+.resolucao-box{background:var(--ok-bg);border:1px solid #86efac;border-radius:10px;padding:12px;margin-bottom:10px;}
+.resolucao-box.parcial{background:var(--info-bg);border-color:#7dd3fc;}
+.resolucao-box.pendente{background:var(--warn-bg);border-color:#fcd34d;}
+
+/* BOTÕES */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .15s;width:100%;justify-content:center;margin-top:8px;}
+.btn-primary{background:linear-gradient(135deg,var(--roxo),var(--roxo-esc));color:#fff;box-shadow:0 4px 14px rgba(89,44,149,.3);}
+.btn-secondary{background:#fff;color:var(--roxo);border:1.5px solid var(--roxo);}
+.btn-sm{padding:7px 14px;font-size:12px;width:auto;margin-top:0;}
+
+/* MODAL ATUALIZAÇÃO */
+.modal-overlay{position:fixed;inset:0;background:rgba(42,22,85,.3);z-index:400;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .22s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:16px;font-weight:800;color:var(--txt);margin-bottom:14px;display:flex;justify-content:space-between;}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--txt-s);}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--txt-s);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.field textarea,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:var(--txt);}
+.field textarea:focus,.field select:focus{border-color:var(--roxo);}
+
+/* UPLOAD FOTOS */
+.foto-upload-area{border:2px dashed var(--lav);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--lav-l);margin-bottom:8px;}
+.foto-upload-area:hover{border-color:var(--roxo);background:#fff;}
+.fotos-preview{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.foto-prev-item{position:relative;width:60px;height:60px;}
+.foto-prev-item img{width:100%;height:100%;border-radius:6px;object-fit:cover;}
+.foto-prev-del{position:absolute;top:-4px;right:-4px;background:var(--bad);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:92vw;max-height:92vh;border-radius:10px;object-fit:contain;}
+.lb-close{position:absolute;top:18px;right:22px;font-size:32px;color:#fff;cursor:pointer;font-weight:700;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--roxo);color:#fff;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;box-shadow:0 8px 24px rgba(89,44,149,.3);opacity:0;transition:all .25s;pointer-events:none;z-index:600;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--txt-s);}
+.spin{width:28px;height:28px;border:3px solid var(--lav);border-top-color:var(--roxo);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--txt-s);}
+
+/* BADGE FILTRO */
+.badge-filtro{display:none;align-items:center;gap:8px;background:var(--lav-l);border:1px solid var(--lav);border-radius:10px;padding:7px 12px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--roxo);}
+.badge-filtro.show{display:flex;}
+
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(3,1fr);}.filtros-grid{grid-template-columns:1fr 1fr;}.oc-grid{grid-template-columns:1fr;}.detail-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span class="brand">PANGEIA 96</span> Controle de Ocorrências</h1>
+  <button class="ubtn" onclick="carregarDados(true)">↺ Atualizar</button>
+</div>
+
+<div class="wrap">
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi" onclick="filtrarKPI('todas')" id="kpiTodas">
+      <div class="kpi-lbl">Total</div>
+      <div class="kpi-val" style="color:var(--roxo)" id="kTotal">—</div>
+    </div>
+    <div class="kpi" onclick="filtrarKPI('pendente')" id="kpiPendente">
+      <div class="kpi-lbl">⚡ Pendentes</div>
+      <div class="kpi-val" style="color:var(--bad)" id="kPendente">—</div>
+    </div>
+    <div class="kpi" onclick="filtrarKPI('andamento')" id="kpiAndamento">
+      <div class="kpi-lbl">🔄 Em andamento</div>
+      <div class="kpi-val" style="color:#d97706" id="kAndamento">—</div>
+    </div>
+    <div class="kpi" onclick="filtrarKPI('finalizado')" id="kpiFinalizado">
+      <div class="kpi-lbl">✅ Finalizadas</div>
+      <div class="kpi-val" style="color:var(--ok)" id="kFinalizado">—</div>
+    </div>
+    <div class="kpi" onclick="filtrarKPI('urgente')" id="kpiUrgente">
+      <div class="kpi-lbl">🔴 Urgentes</div>
+      <div class="kpi-val" style="color:var(--bad)" id="kUrgente">—</div>
+    </div>
+  </div>
+
+  <!-- BADGE FILTRO -->
+  <div class="badge-filtro" id="badgeFiltro">
+    🔍 Filtrando por: <strong id="badgeFiltroTxt"></strong>
+    <button onclick="limparFiltro()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--roxo);font-weight:700;margin-left:4px;">✕</button>
+  </div>
+
+  <!-- PAINEL PENDENTES/ANDAMENTO -->
+  <div class="painel-pendentes" id="painelPendentes" style="display:none;">
+    <div class="painel-title">🚨 Em aberto — requerem atenção</div>
+    <div class="pending-list" id="pendingList"></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <div class="filtros-grid">
+      <input type="text" id="fBusca" placeholder="Buscar em tudo..." oninput="renderOcorrencias()">
+      <select id="fTipo" onchange="renderOcorrencias()"><option value="">Todos os tipos</option></select>
+      <select id="fUrgencia" onchange="renderOcorrencias()"><option value="">Todas as urgências</option></select>
+      <button class="clr-btn" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div id="ocGrid" class="oc-grid">
+    <div class="loading"><div class="spin"></div>Carregando...</div>
+  </div>
+
+</div>
+
+<!-- FLOAT CARD OCORRÊNCIA -->
+<div class="fbk" id="fbk" onclick="fecharCard()"></div>
+<div class="fc" id="fcOc">
+  <div class="fc-head">
+    <div style="flex:1;padding-right:10px;">
+      <div class="fc-titulo" id="fcTitulo">—</div>
+      <div class="fc-sub" id="fcSub">—</div>
+      <div style="margin-top:6px;" id="fcPills"></div>
+    </div>
+    <button class="fx" onclick="fecharCard()">×</button>
+  </div>
+  <div class="fc-body" id="fcBody"></div>
+</div>
+
+<!-- MODAL ATUALIZAÇÃO -->
+<div class="modal-overlay" id="modalAtualizar">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ Atualizar ocorrência
+      <button class="modal-close" onclick="fecharModal()">×</button>
+    </div>
+    <div class="field">
+      <label>Status da resolução</label>
+      <select id="aStatus">
+        <option value="Em andamento">🔄 Em andamento</option>
+        <option value="Parcialmente atendida">⚡ Parcialmente atendida</option>
+        <option value="Finalizada — totalmente atendida">✅ Finalizada — totalmente atendida</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Descrição da resolução</label>
+      <textarea id="aTexto" rows="4" placeholder="Descreva como a ocorrência foi resolvida..."></textarea>
+    </div>
+    <div class="field">
+      <label>Fotos da resolução (máx. 5)</label>
+      <div class="foto-upload-area" onclick="document.getElementById('fotoInput').click()">
+        📷 Clique para adicionar fotos
+      </div>
+      <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="adicionarFotos(this)">
+      <div class="fotos-preview" id="fotosPreview"></div>
+    </div>
+    <button class="btn btn-primary" onclick="salvarAtualizacao()">💾 Salvar atualização</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="fecharLightbox()">
+  <span class="lb-close">×</span>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx51p15qIMhU9Hzmvy2C57H01TVI5jlBAjtFRZIOrEOLtzPWm3IkOH1M7-_H6WfuqyrAA/exec';
+var CACHE_KEY = 'pangeia_oc_v1';
+var CACHE_TTL = 5*60*1000;
+var todos = [];
+var filtroKPIAtivo = null;
+var ocAtual = null;
+var fotosParaEnviar = [];
+
+// ── CACHE ──────────────────────────────────────────────────────────────────
+function salvarCache(d){try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),d:d}));}catch(e){}}
+function lerCache(){try{var r=sessionStorage.getItem(CACHE_KEY);if(!r)return null;var o=JSON.parse(r);return(Date.now()-o.ts>CACHE_TTL)?null:o.d;}catch(e){return null;}}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+window.addEventListener('load', function(){
+  var cache = lerCache();
+  if(cache){processar(cache);toast('⚡ Cache');}
+  else carregarDados(false);
+});
+
+function carregarDados(forcar){
+  if(!forcar){var c=lerCache();if(c){processar(c);return;}}
+  toast('Carregando...');
+  chamarScript({acao:'listar',t:Date.now()}, function(d){
+    if(d.erro){toast('Erro: '+d.erro);return;}
+    salvarCache(d.ocorrencias);
+    processar(d.ocorrencias);
+    toast('✅ '+d.ocorrencias.length+' ocorrência(s)');
+  });
+}
+
+function chamarScript(params, cb){
+  var url=SCRIPT_URL+'?'+Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&')+'&t='+Date.now();
+  fetch(url).then(function(r){return r.json();}).then(cb).catch(function(){cb({erro:'Erro de conexão'});});
+}
+
+function processar(ocs){
+  todos = ocs;
+  popularSelects();
+  renderKPIs();
+  renderPainelPendentes();
+  renderOcorrencias();
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function urgLabel(u){
+  if(!u)return'baixo';
+  if(u.toLowerCase().indexOf('urgente')>=0||u.toLowerCase().indexOf('🔴')>=0)return'urgente';
+  if(u.toLowerCase().indexOf('moderado')>=0||u.toLowerCase().indexOf('🟡')>=0)return'moderado';
+  return'baixo';
+}
+
+function statusFinal(oc){
+  if(oc.statusAtual) return oc.statusAtual;
+  var s=oc.statusInicial||'';
+  if(s.toLowerCase().indexOf('encerrada')>=0) return 'Finalizada — totalmente atendida';
+  if(s.toLowerCase().indexOf('em andamento')>=0) return 'Em andamento';
+  return 'Em andamento';
+}
+
+function statusClass(s){
+  if(!s)return'pill-andamento';
+  var sl=s.toLowerCase();
+  if(sl.indexOf('finaliz')>=0&&sl.indexOf('totalmente')>=0)return'pill-finalizado';
+  if(sl.indexOf('parcial')>=0)return'pill-parcial';
+  if(sl.indexOf('andamento')>=0)return'pill-andamento';
+  return'pill-pendente';
+}
+
+function statusEmoji(s){
+  if(!s)return'🔄';
+  var sl=s.toLowerCase();
+  if(sl.indexOf('finaliz')>=0&&sl.indexOf('totalmente')>=0)return'✅';
+  if(sl.indexOf('parcial')>=0)return'⚡';
+  return'🔄';
+}
+
+function isFinalizado(oc){
+  var s=statusFinal(oc).toLowerCase();
+  return s.indexOf('finaliz')>=0&&s.indexOf('totalmente')>=0;
+}
+
+function urlFoto(id){return'https://drive.google.com/thumbnail?id='+id+'&sz=w400';}
+
+function normData(s){
+  if(!s)return'—';s=s.toString().trim().split(' ')[0];
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){var p1=parseInt(m[1]),p2=parseInt(m[2]),a=m[3];if(p1>12)return('0'+p1).slice(-2)+'/'+('0'+p2).slice(-2)+'/'+a;return('0'+p2).slice(-2)+'/'+('0'+p1).slice(-2)+'/'+a;}
+  return s;
+}
+
+function normHora(s){
+  if(!s)return'';s=s.toString().trim();
+  var m=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  if(!m)return'';
+  var h=parseInt(m[1]),min=m[2],per=(m[3]||'').toUpperCase();
+  if(per==='PM'&&h<12)h+=12;if(per==='AM'&&h===12)h=0;
+  var r=('0'+h).slice(-2)+':'+min;return r==='00:00'?'':r;
+}
+
+// ── SELECTS ────────────────────────────────────────────────────────────────
+function popularSelects(){
+  var tipos=[...new Set(todos.map(function(o){return o.tipo;}))].filter(Boolean).sort();
+  var urgs=[...new Set(todos.map(function(o){return urgLabel(o.urgencia);}))].filter(Boolean).sort();
+  function preencher(id,lista,label){
+    var el=document.getElementById(id);if(!el)return;
+    el.innerHTML='<option value="">'+label+'</option>';
+    lista.forEach(function(v){el.innerHTML+='<option>'+v+'</option>';});
+  }
+  preencher('fTipo',tipos,'Todos os tipos');
+  preencher('fUrgencia',urgs,'Todas as urgências');
+}
+
+// ── KPIs ───────────────────────────────────────────────────────────────────
+function renderKPIs(){
+  var total=todos.length;
+  var pendente=todos.filter(function(o){var s=statusFinal(o).toLowerCase();return s.indexOf('andamento')>=0;}).length;
+  var finalizado=todos.filter(function(o){return isFinalizado(o);}).length;
+  var parcial=todos.filter(function(o){return statusFinal(o).toLowerCase().indexOf('parcial')>=0;}).length;
+  var urgente=todos.filter(function(o){return urgLabel(o.urgencia)==='urgente';}).length;
+  document.getElementById('kTotal').textContent=total;
+  document.getElementById('kPendente').textContent=pendente+parcial;
+  document.getElementById('kAndamento').textContent=parcial;
+  document.getElementById('kFinalizado').textContent=finalizado;
+  document.getElementById('kUrgente').textContent=urgente;
+}
+
+// ── PAINEL PENDENTES ───────────────────────────────────────────────────────
+function renderPainelPendentes(){
+  var abertos=todos.filter(function(o){return!isFinalizado(o);})
+    .sort(function(a,b){
+      var ua=urgLabel(a.urgencia),ub=urgLabel(b.urgencia);
+      var ord={urgente:0,moderado:1,baixo:2};
+      return (ord[ua]||2)-(ord[ub]||2);
+    });
+  var painel=document.getElementById('painelPendentes');
+  if(!abertos.length){painel.style.display='none';return;}
+  painel.style.display='block';
+  var list=document.getElementById('pendingList');
+  list.innerHTML=abertos.map(function(o){
+    var urg=urgLabel(o.urgencia);
+    var cls=urg==='urgente'?'':'mod';
+    return '<div class="pending-item '+cls+'" onclick="abrirCard(\''+o.ts+'\')">'
+      +'<div class="pending-nome">'+o.local+'</div>'
+      +'<div class="pending-det">'+normData(o.data)+(o.hora?' '+normHora(o.hora):'')+' · '+o.tipo+' · '+statusEmoji(statusFinal(o))+' '+statusFinal(o)+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── FILTRO KPI ─────────────────────────────────────────────────────────────
+function filtrarKPI(tipo){
+  if(filtroKPIAtivo===tipo){limparFiltro();return;}
+  filtroKPIAtivo=tipo;
+  document.querySelectorAll('.kpi').forEach(function(k){k.classList.remove('active');});
+  var m={todas:'kpiTodas',pendente:'kpiPendente',andamento:'kpiAndamento',finalizado:'kpiFinalizado',urgente:'kpiUrgente'};
+  var el=document.getElementById(m[tipo]);if(el)el.classList.add('active');
+  var nomes={todas:'Todas',pendente:'Pendentes',andamento:'Em andamento',finalizado:'Finalizadas',urgente:'Urgentes'};
+  document.getElementById('badgeFiltro').classList.add('show');
+  document.getElementById('badgeFiltroTxt').textContent=nomes[tipo];
+  renderOcorrencias();
+}
+
+function limparFiltro(){
+  filtroKPIAtivo=null;
+  document.querySelectorAll('.kpi').forEach(function(k){k.classList.remove('active');});
+  document.getElementById('badgeFiltro').classList.remove('show');
+  renderOcorrencias();
+}
+
+function limparFiltros(){
+  document.getElementById('fBusca').value='';
+  document.getElementById('fTipo').selectedIndex=0;
+  document.getElementById('fUrgencia').selectedIndex=0;
+  limparFiltro();
+}
+
+// ── RENDER OCORRÊNCIAS ─────────────────────────────────────────────────────
+function renderOcorrencias(){
+  var busca=(document.getElementById('fBusca').value||'').toUpperCase();
+  var fTipo=document.getElementById('fTipo').value;
+  var fUrg=document.getElementById('fUrgencia').value;
+
+  var lista=todos.filter(function(o){
+    if(filtroKPIAtivo){
+      var s=statusFinal(o).toLowerCase();
+      if(filtroKPIAtivo==='pendente'&&!(s.indexOf('andamento')>=0))return false;
+      if(filtroKPIAtivo==='andamento'&&s.indexOf('parcial')<0)return false;
+      if(filtroKPIAtivo==='finalizado'&&!isFinalizado(o))return false;
+      if(filtroKPIAtivo==='urgente'&&urgLabel(o.urgencia)!=='urgente')return false;
+    }
+    if(fTipo&&o.tipo!==fTipo)return false;
+    if(fUrg&&urgLabel(o.urgencia)!==fUrg)return false;
+    if(busca){
+      var txt=(o.local+o.tipo+o.descricao+o.fiscal+o.envolvidos).toUpperCase();
+      if(txt.indexOf(busca)<0)return false;
+    }
+    return true;
+  }).sort(function(a,b){
+    var ua=urgLabel(a.urgencia),ub=urgLabel(b.urgencia);
+    var ord={urgente:0,moderado:1,baixo:2};
+    var diff=(ord[ua]||2)-(ord[ub]||2);
+    if(diff!==0)return diff;
+    return b.ts.localeCompare(a.ts);
+  });
+
+  var grid=document.getElementById('ocGrid');
+  if(!lista.length){grid.innerHTML='<div class="empty">Nenhuma ocorrência encontrada</div>';return;}
+
+  grid.innerHTML=lista.map(function(o){
+    var urg=urgLabel(o.urgencia);
+    var sf=statusFinal(o);
+    var urgPill='<span class="pill pill-'+urg+'">'+urg+'</span>';
+    var stPill='<span class="pill '+statusClass(sf)+'">'+statusEmoji(sf)+' '+sf+'</span>';
+    return '<div class="oc-card '+urg+'" onclick="abrirCard(\''+o.ts+'\')">'
+      +'<div class="oc-header">'
+        +'<div class="oc-titulo">'+o.local+'</div>'
+        +urgPill
+      +'</div>'
+      +'<div class="oc-info">'
+        +'<span>📅 '+normData(o.data)+(o.hora?' '+normHora(o.hora):'')+' </span>'
+        +'<span>👤 '+o.fiscal+'</span>'
+      +'</div>'
+      +'<div style="margin-top:6px;">'+stPill+' <span class="pill" style="background:var(--lav-l);color:var(--roxo);">'+o.tipo+'</span></div>'
+      +'<div class="oc-desc">'+o.descricao+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── CARD DETALHADO ─────────────────────────────────────────────────────────
+function abrirCard(ts){
+  var o=todos.find(function(x){return x.ts===ts;});
+  if(!o)return;
+  ocAtual=o;
+  var urg=urgLabel(o.urgencia);
+  var sf=statusFinal(o);
+  document.getElementById('fcTitulo').textContent=o.local;
+  document.getElementById('fcSub').textContent=normData(o.data)+(o.hora?' às '+normHora(o.hora):'')+' · Fiscal: '+o.fiscal;
+  document.getElementById('fcPills').innerHTML=
+    '<span class="pill pill-'+urg+'">'+urg+'</span> '
+    +'<span class="pill '+statusClass(sf)+'">'+statusEmoji(sf)+' '+sf+'</span> '
+    +'<span class="pill" style="background:var(--lav-l);color:var(--roxo);">'+o.tipo+'</span>';
+
+  var body=document.getElementById('fcBody');
+  body.innerHTML=
+    '<div class="detail-grid">'
+      +'<div class="detail-item"><div class="detail-lbl">Local</div><div class="detail-val">'+o.local+'</div></div>'
+      +'<div class="detail-item"><div class="detail-lbl">Tipo</div><div class="detail-val">'+o.tipo+'</div></div>'
+      +'<div class="detail-item"><div class="detail-lbl">Envolvidos</div><div class="detail-val">'+(o.envolvidos||'—')+'</div></div>'
+      +'<div class="detail-item"><div class="detail-lbl">Coordenação acionada</div><div class="detail-val">'+o.statusInicial+'</div></div>'
+    +'</div>'
+    +'<div class="sec">📋 Descrição</div>'
+    +'<div class="full-text">'+o.descricao+'</div>'
+    +'<div class="sec">🔧 Ação do fiscal</div>'
+    +'<div class="full-text">'+(o.acaoFiscal||'—')+'</div>';
+
+  // Fotos do registro
+  if(o.fotos&&o.fotos.length){
+    body.innerHTML+='<div class="sec">📷 Fotos do registro</div><div class="fotos-grid">';
+    o.fotos.forEach(function(id){
+      body.innerHTML+='<img class="foto-thumb" src="'+urlFoto(id)+'" onclick="event.stopPropagation();abrirLightbox(\''+urlFoto(id)+'\')" onerror="this.parentNode.removeChild(this)">';
+    });
+    body.innerHTML+='</div>';
+  }
+
+  // Resolução
+  if(o.resolucaoTexto||o.resolucaoData){
+    var rcls=isFinalizado(o)?'':'parcial';
+    body.innerHTML+='<div class="sec">✅ Resolução</div>'
+      +'<div class="resolucao-box '+rcls+'">'
+        +'<div style="font-size:11px;color:var(--txt-s);margin-bottom:4px">'+statusEmoji(sf)+' '+sf+' · '+o.resolucaoData+'</div>'
+        +'<div style="font-size:13px;color:var(--txt)">'+o.resolucaoTexto+'</div>'
+      +'</div>';
+    if(o.resolucaoFotos&&o.resolucaoFotos.length){
+      body.innerHTML+='<div class="sec">📷 Fotos da resolução</div><div class="fotos-grid">';
+      o.resolucaoFotos.forEach(function(id){
+        body.innerHTML+='<img class="foto-thumb" src="'+urlFoto(id)+'" onclick="event.stopPropagation();abrirLightbox(\''+urlFoto(id)+'\')" onerror="this.parentNode.removeChild(this)">';
+      });
+      body.innerHTML+='</div>';
+    }
+  }
+
+  // Botão atualizar
+  if(!isFinalizado(o)){
+    body.innerHTML+='<button class="btn btn-primary" onclick="event.stopPropagation();abrirModal()">✏️ Atualizar ocorrência</button>';
+  } else {
+    body.innerHTML+='<button class="btn btn-secondary" onclick="event.stopPropagation();abrirModal()">✏️ Editar resolução</button>';
+  }
+
+  document.getElementById('fcOc').classList.add('show');
+  document.getElementById('fbk').classList.add('active');
+}
+
+function fecharCard(){
+  document.getElementById('fcOc').classList.remove('show');
+  document.getElementById('fbk').classList.remove('active');
+  ocAtual=null;
+}
+
+// ── MODAL ATUALIZAÇÃO ──────────────────────────────────────────────────────
+function abrirModal(){
+  if(!ocAtual)return;
+  document.getElementById('aStatus').value=statusFinal(ocAtual);
+  document.getElementById('aTexto').value=ocAtual.resolucaoTexto||'';
+  document.getElementById('fotosPreview').innerHTML='';
+  fotosParaEnviar=[];
+  document.getElementById('modalAtualizar').classList.add('show');
+}
+
+function fecharModal(){
+  document.getElementById('modalAtualizar').classList.remove('show');
+  fotosParaEnviar=[];
+}
+
+function adicionarFotos(input){
+  var files=Array.from(input.files);
+  var restante=5-fotosParaEnviar.length;
+  if(restante<=0){toast('Máximo 5 fotos');return;}
+  files.slice(0,restante).forEach(function(file){
+    if(!file.type.startsWith('image/')){toast('Apenas imagens');return;}
+    fotosParaEnviar.push(file);
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var prev=document.getElementById('fotosPreview');
+      var idx=fotosParaEnviar.indexOf(file);
+      prev.innerHTML+='<div class="foto-prev-item" id="prev-'+idx+'">'
+        +'<img src="'+e.target.result+'">'
+        +'<button class="foto-prev-del" onclick="removerFoto('+idx+')">×</button>'
+        +'</div>';
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+
+function removerFoto(idx){
+  fotosParaEnviar.splice(idx,1);
+  document.getElementById('fotosPreview').innerHTML='';
+  fotosParaEnviar.forEach(function(f,i){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var prev=document.getElementById('fotosPreview');
+      prev.innerHTML+='<div class="foto-prev-item" id="prev-'+i+'">'
+        +'<img src="'+e.target.result+'">'
+        +'<button class="foto-prev-del" onclick="removerFoto('+i+')">×</button>'
+        +'</div>';
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function salvarAtualizacao(){
+  if(!ocAtual){toast('Nenhuma ocorrência selecionada');return;}
+  var status=document.getElementById('aStatus').value;
+  var texto=document.getElementById('aTexto').value.trim();
+  if(!texto){toast('Descreva a resolução');return;}
+  toast('Salvando...');
+
+  // Upload de fotos primeiro, depois salvar
+  var fotosIds=[];
+  var pendente=fotosParaEnviar.length;
+  if(!pendente){
+    salvarNoPlanilha(status,texto,[]);return;
+  }
+  fotosParaEnviar.forEach(function(file,i){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var base64=e.target.result.split(',')[1];
+      chamarScript({
+        acao:'uploadFoto',
+        dados:JSON.stringify({base64:base64,nome:file.name,mime:file.type}),
+        t:Date.now()+i
+      },function(d){
+        if(d.ok)fotosIds.push(d.id);
+        pendente--;
+        if(pendente===0)salvarNoPlanilha(status,texto,fotosIds);
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function salvarNoPlanilha(status,texto,fotosIds){
+  chamarScript({
+    acao:'atualizar',
+    dados:JSON.stringify({linha:ocAtual.linha,status:status,texto:texto,fotos:fotosIds}),
+    t:Date.now()
+  },function(d){
+    if(d.ok){
+      toast('✅ Ocorrência atualizada!');
+      fecharModal();
+      fecharCard();
+      sessionStorage.removeItem(CACHE_KEY);
+      carregarDados(true);
+    }else{toast('Erro: '+(d.erro||'desconhecido'));}
+  });
+}
+
+// ── LIGHTBOX ───────────────────────────────────────────────────────────────
+function abrirLightbox(src){document.getElementById('lbImg').src=src;document.getElementById('lightbox').classList.add('show');}
+function fecharLightbox(){document.getElementById('lightbox').classList.remove('show');document.getElementById('lbImg').src='';}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  setTimeout(function(){t.className='toast';},2800);
+}
+</script>
+</body>
+</html>
