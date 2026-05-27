@@ -407,7 +407,8 @@ function renderPainelPendentes(){
     var urg=urgLabel(o.urgencia);
     var cls=urg==='urgente'?'':'mod';
     return '<div class="pending-item '+cls+'" onclick="abrirCard(\''+o.ts+'\')">'
-      +'<div class="pending-nome">'+o.local+'</div>'
+      +'<div class="pending-nome">'+(o.tema||o.local)+'</div>'
+        +'<div style="font-size:10px;color:var(--txt-s)">📍 '+o.local+'</div>'
       +'<div class="pending-det">'+normData(o.data)+(o.hora?' '+normHora(o.hora):'')+' · '+o.tipo+' · '+statusEmoji(statusFinal(o))+' '+statusFinal(o)+'</div>'
       +'</div>';
   }).join('');
@@ -479,7 +480,8 @@ function renderOcorrencias(){
     var stPill='<span class="pill '+statusClass(sf)+'">'+statusEmoji(sf)+' '+sf+'</span>';
     return '<div class="oc-card '+urg+'" onclick="abrirCard(\''+o.ts+'\')">'
       +'<div class="oc-header">'
-        +'<div class="oc-titulo">'+o.local+'</div>'
+        +'<div class="oc-titulo">'+(o.tema||o.local)+'</div>'
+      +'<div style="font-size:11px;color:var(--txt-s);margin-top:2px">📍 '+o.local+'</div>'
         +urgPill
       +'</div>'
       +'<div class="oc-info">'
@@ -499,8 +501,8 @@ function abrirCard(ts){
   ocAtual=o;
   var urg=urgLabel(o.urgencia);
   var sf=statusFinal(o);
-  document.getElementById('fcTitulo').textContent=o.local;
-  document.getElementById('fcSub').textContent=normData(o.data)+(o.hora?' às '+normHora(o.hora):'')+' · Fiscal: '+o.fiscal;
+  document.getElementById('fcTitulo').textContent=o.tema||o.local;
+  document.getElementById('fcSub').textContent=(o.tema?o.local+' · ':'')+normData(o.data)+(o.hora?' às '+normHora(o.hora):'')+' · Fiscal: '+o.fiscal;
   document.getElementById('fcPills').innerHTML=
     '<span class="pill pill-'+urg+'">'+urg+'</span> '
     +'<span class="pill '+statusClass(sf)+'">'+statusEmoji(sf)+' '+sf+'</span> '
